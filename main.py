@@ -72,29 +72,31 @@ def log(text):
 
 def get_base_dir():
     if CONFIG_FILE.exists():
-        os.system("powershell -command \"(New-Object -ComObject WScript.Shell).SendKeys('{F11}')\"")
-        print(art)
         saved_path = CONFIG_FILE.read_text(encoding="utf-8").strip()
         if saved_path and os.path.isdir(saved_path):
             log(f"Использую сохраненный путь: {saved_path}")
             return Path(saved_path)
 
-    print("\n=== НАСТРОЙКА ПУТИ ===")
-    print("Пример: C:/Users/123/Рабочий стол/zapret")
-    user_input = input("Введите полный путь к папке запрета: ").strip().replace('"', '')
-    
-    path_obj = Path(user_input)
-    
-    path_obj.mkdir(parents=True, exist_ok=True)
+    while True:
+        print("\n=== НАСТРОЙКА ПУТИ ===")
+        print("Пример: C:/Users/123/Рабочий стол/zapret")
+        user_input = input("Введите полный путь к папке запрета: ").strip().replace('"', '')
+        
+        if not user_input:
+            print("[!!!] Путь не может быть пустым!")
+            continue
 
-    CONFIG_FILE.write_text(str(path_obj), encoding="utf-8")
-    log("Путь сохранен!")
-    return path_obj
+        path_obj = Path(user_input)
+        try:
+            path_obj.mkdir(parents=True, exist_ok=True)
+            CONFIG_FILE.write_text(str(path_obj), encoding="utf-8")
+            log("Путь сохранен!")
+            return path_obj
+        except Exception as e:
+            print(f"[!!!] Ошибка создания папки: {e}")
 
 def main():
     if not is_admin():
-        os.system("powershell -command \"(New-Object -ComObject WScript.Shell).SendKeys('{F11}')\"")
-        print(art)
         print("\n[!!!] ЗАПУСТИ ОТ ИМЕНИ АДМИНИСТРАТОРА!\n")
         os.system("pause")
         return
@@ -106,10 +108,15 @@ def main():
     BACKUP_TEMP = Path(os.environ["TEMP"]) / "zapret_user_list.txt"
 
     log("Остановка старых служб и процессов...")
-    subprocess.run('net stop zapret & sc delete zapret', shell=True, capture_output=True)
+    subprocess.run('net stop zapret', shell=True, capture_output=True)
+    subprocess.run('sc delete zapret', shell=True, capture_output=True)
+    subprocess.run('net stop WinDivert', shell=True, capture_output=True)
+    subprocess.run('sc delete WinDivert', shell=True, capture_output=True)
+    subprocess.run('net stop WinDivert14', shell=True, capture_output=True)
+    subprocess.run('sc delete WinDivert14', shell=True, capture_output=True)
     subprocess.run('taskkill /IM winws.exe /F', shell=True, capture_output=True)
     
-    time.sleep(2)
+    time.sleep(3)
 
     source_list = BASE_DIR / "lists" / "list-general.txt"
     if source_list.exists():
@@ -122,9 +129,12 @@ def main():
         log(f"Очистка папки {BASE_DIR}...")
         for item in BASE_DIR.iterdir():
             try:
-                if item.is_file(): item.unlink()
-                elif item.is_dir(): shutil.rmtree(item)
-            except: pass
+                if item.is_file():
+                    item.unlink()
+                elif item.is_dir():
+                    shutil.rmtree(item, ignore_errors=True)
+            except:
+                pass
 
     BASE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -135,6 +145,7 @@ def main():
         with open(zip_path, "wb") as f: f.write(r.content)
     except Exception as e:
         log(f"Ошибка сети: {e}")
+        os.system("pause")
         return
 
     log("Распаковка...")
@@ -165,12 +176,13 @@ def main():
         idx = files.index(CONFIG_NAME) + 1
     except ValueError:
         log(f"ОШИБКА: {CONFIG_NAME} не найден!")
+        os.system("pause")
         return
 
     ps_script = f"""
     $wshell = New-Object -ComObject WScript.Shell;
     $proc = Start-Process cmd.exe -ArgumentList '/c cd /d "{BASE_DIR}" && service.bat admin' -PassThru;
-    Start-Sleep -Seconds 4;
+    Start-Sleep -Seconds 5;
     $wshell.SendKeys('1~'); 
     Start-Sleep -Seconds 2;
     $wshell.SendKeys('{idx}~'); 
@@ -183,7 +195,7 @@ def main():
     subprocess.run(["powershell", "-Command", ps_script])
 
     print("\n" + "="*50)
-    print(" ГОТОВО! Путь запомнен, служба установлена.")
+    print(" ГОТОВО! Служба запущена.")
     print("="*50)
     os.system("pause")
 
