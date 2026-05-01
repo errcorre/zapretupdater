@@ -58,7 +58,7 @@ art = """
 ⢸⡇⠀⡆⢹⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡠⠀⠀⠀⠀⠀⠺⠃⠀⠀⠀⢀⡀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
   | @errcore | @errcore | @errcore | @errcore | @errcore | @errcore | @errcore | @errcore | 
 """
-# Файл для хранения настроек рядом с экзешником
+
 CONFIG_FILE = Path("settings.cfg")
 
 def is_admin():
@@ -71,7 +71,6 @@ def log(text):
     print(f"[➔] {text}")
 
 def get_base_dir():
-    """Получает путь из файла или у пользователя"""
     if CONFIG_FILE.exists():
         os.system("powershell -command \"(New-Object -ComObject WScript.Shell).SendKeys('{F11}')\"")
         print(art)
@@ -80,17 +79,14 @@ def get_base_dir():
             log(f"Использую сохраненный путь: {saved_path}")
             return Path(saved_path)
 
-    # Если файла нет или путь невалидный
     print("\n=== НАСТРОЙКА ПУТИ ===")
     print("Пример: C:/Users/123/Рабочий стол/zapret")
     user_input = input("Введите полный путь к папке запрета: ").strip().replace('"', '')
     
     path_obj = Path(user_input)
     
-    # Создаем папку, если её нет
     path_obj.mkdir(parents=True, exist_ok=True)
-    
-    # Сохраняем на будущее
+
     CONFIG_FILE.write_text(str(path_obj), encoding="utf-8")
     log("Путь сохранен!")
     return path_obj
@@ -103,15 +99,12 @@ def main():
         os.system("pause")
         return
 
-    # ПОЛУЧАЕМ ПУТЬ
     BASE_DIR = get_base_dir()
     
-    # Дальнейшие переменные зависят от BASE_DIR
     CONFIG_NAME = "general (SIMPLE FAKE ALT2).bat" 
     GITHUB_URL = "https://github.com/flowseal/zapret-discord-youtube/archive/refs/heads/main.zip"
     BACKUP_TEMP = Path(os.environ["TEMP"]) / "zapret_user_list.txt"
 
-    # --- ДАЛЕЕ ВЕСЬ ТВОЙ СТАНДАРТНЫЙ КОД ---
     log("Остановка старых служб и процессов...")
     subprocess.run('net stop zapret & sc delete zapret', shell=True, capture_output=True)
     subprocess.run('taskkill /IM winws.exe /F', shell=True, capture_output=True)
